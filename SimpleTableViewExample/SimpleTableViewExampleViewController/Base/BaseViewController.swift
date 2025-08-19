@@ -33,9 +33,8 @@ class BaseViewController: UIViewController {
         if !self.didSetupConstraints {
             configureConstraints()
             didSetupConstraints = true
-        } else {
-            super.updateViewConstraints()
         }
+        super.updateViewConstraints()
     }
 
     func configureConstraints() {
