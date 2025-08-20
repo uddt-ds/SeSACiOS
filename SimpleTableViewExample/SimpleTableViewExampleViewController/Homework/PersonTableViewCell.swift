@@ -13,6 +13,8 @@ final class PersonTableViewCell: UITableViewCell, ReusableViewProtocol {
 
     var disposeBag = DisposeBag()
 
+    var buttonTapped: (() -> Void)?
+
     static let identifier = "PersonTableViewCell"
 
     let usernameLabel: UILabel = {
@@ -46,6 +48,7 @@ final class PersonTableViewCell: UITableViewCell, ReusableViewProtocol {
 
         self.selectionStyle = .none
         configure()
+        bind()
     }
 
     required init?(coder: NSCoder) {
@@ -92,9 +95,16 @@ final class PersonTableViewCell: UITableViewCell, ReusableViewProtocol {
         }
     }
 
+    private func bind() {
+        detailButton.rx.tap
+            .bind(with: self) { owner, _ in
+                owner.buttonTapped?()
+            }
+            .disposed(by: disposeBag)
+    }
+
     override func prepareForReuse() {
         super.prepareForReuse()
-        disposeBag = DisposeBag()
     }
 }
 

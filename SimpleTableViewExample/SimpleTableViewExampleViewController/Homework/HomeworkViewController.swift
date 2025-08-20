@@ -95,12 +95,16 @@ class HomeworkViewController: UIViewController {
         data
             .bind(to: tableView.rx.items(cellIdentifier: PersonTableViewCell.identifier, cellType: PersonTableViewCell.self)) { [weak self] (row, element, cell) in
                 guard let self else { return }
-                cell.detailButton.rx.tap
-                    .bind(with: self) { owner, _ in
-                        let vc = ViewController()
-                        owner.navigationController?.pushViewController(vc, animated: true)
-                    }
-                    .disposed(by: cell.disposeBag)
+//                cell.detailButton.rx.tap
+//                    .bind(with: self) { owner, _ in
+//                        let vc = ViewController()
+//                        owner.navigationController?.pushViewController(vc, animated: true)
+//                    }
+//                    .disposed(by: cell.disposeBag)
+                cell.buttonTapped = {
+                    let vc = ViewController()
+                    self.navigationController?.pushViewController(vc, animated: true)
+                }
                 cell.configureCell(with: element)
             }
             .disposed(by: disposeBag)
@@ -160,7 +164,7 @@ class HomeworkViewController: UIViewController {
             make.bottom.equalToSuperview()
         }
     }
-    
+
     private func layout() -> UICollectionViewFlowLayout {
         let layout = UICollectionViewFlowLayout()
         layout.itemSize = CGSize(width: 80, height: 40)
