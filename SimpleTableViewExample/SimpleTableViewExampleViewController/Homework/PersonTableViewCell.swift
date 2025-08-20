@@ -15,6 +15,8 @@ final class PersonTableViewCell: UITableViewCell, ReusableViewProtocol {
 
     var buttonTapped: (() -> Void)?
 
+//    var likeButtonTapped: (() -> Void)?
+
     static let identifier = "PersonTableViewCell"
 
     let usernameLabel: UILabel = {
@@ -43,6 +45,14 @@ final class PersonTableViewCell: UITableViewCell, ReusableViewProtocol {
         return button
     }()
 
+    let likeButton: UIButton = {
+        let button = UIButton()
+        button.setImage(UIImage(systemName: "heart"), for: .normal)
+        button.setImage(UIImage(systemName: "heart.fill"), for: .selected)
+        button.tintColor = .blue
+        return button
+    }()
+
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
 
@@ -59,6 +69,7 @@ final class PersonTableViewCell: UITableViewCell, ReusableViewProtocol {
     private func configure() {
         contentView.addSubview(usernameLabel)
         contentView.addSubview(profileImageView)
+        contentView.addSubview(likeButton)
         contentView.addSubview(detailButton)
 
         profileImageView.snp.makeConstraints {
@@ -71,6 +82,12 @@ final class PersonTableViewCell: UITableViewCell, ReusableViewProtocol {
             $0.centerY.equalTo(profileImageView)
             $0.leading.equalTo(profileImageView.snp.trailing).offset(8)
             $0.trailing.equalTo(detailButton.snp.leading).offset(-8)
+        }
+
+        likeButton.snp.makeConstraints {
+            $0.centerY.equalTo(profileImageView)
+            $0.trailing.equalTo(detailButton.snp.leading).offset(-20)
+            $0.size.equalTo(32)
         }
 
         detailButton.snp.makeConstraints {
@@ -86,7 +103,10 @@ final class PersonTableViewCell: UITableViewCell, ReusableViewProtocol {
         DispatchQueue.global().async { [weak self] in
             guard let self else { return }
             guard let imageData = try? Data(contentsOf: imageURL) else { return }
-            DispatchQueue.main.async {
+
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+
                 let image = UIImage(data: imageData)
 
                 self.profileImageView.image = image
@@ -101,10 +121,18 @@ final class PersonTableViewCell: UITableViewCell, ReusableViewProtocol {
                 owner.buttonTapped?()
             }
             .disposed(by: disposeBag)
+
+//        likeButton.rx.tap
+//            .bind(with: self) { owner, _ in
+//                owner.likeButtonTapped?()
+//            }
+//            .disposed(by: disposeBag)
     }
 
     override func prepareForReuse() {
         super.prepareForReuse()
+        likeButton.isSelected = false
+        disposeBag = DisposeBag()
     }
 }
 

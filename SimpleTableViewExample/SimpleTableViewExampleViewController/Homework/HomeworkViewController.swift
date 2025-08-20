@@ -81,6 +81,8 @@ class HomeworkViewController: UIViewController {
 
     var detailButtonTapped: BehaviorSubject<Any?> = BehaviorSubject(value: nil)
 
+    var likeList = BehaviorSubject(value: UserModel.likeList)
+
     let tableView = UITableView()
     lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout())
     let searchBar = UISearchBar()
@@ -95,17 +97,34 @@ class HomeworkViewController: UIViewController {
         data
             .bind(to: tableView.rx.items(cellIdentifier: PersonTableViewCell.identifier, cellType: PersonTableViewCell.self)) { [weak self] (row, element, cell) in
                 guard let self else { return }
-//                cell.detailButton.rx.tap
-//                    .bind(with: self) { owner, _ in
-//                        let vc = ViewController()
-//                        owner.navigationController?.pushViewController(vc, animated: true)
-//                    }
-//                    .disposed(by: cell.disposeBag)
-                cell.buttonTapped = {
-                    let vc = ViewController()
-                    self.navigationController?.pushViewController(vc, animated: true)
-                }
+
                 cell.configureCell(with: element)
+
+                cell.detailButton.rx.tap
+                    .bind(with: self) { owner, _ in
+                        let vc = ViewController()
+                        owner.navigationController?.pushViewController(vc, animated: true)
+                    }
+                    .disposed(by: cell.disposeBag)
+//                cell.likeButtonTapped = {
+//                    let vc = ViewController()
+//                    self.navigationController?.pushViewController(vc, animated: true)
+//                }
+
+                cell.likeButton.rx.tap
+                    .bind(with: self) { owner, _ in
+                        cell.likeButton.isSelected.toggle()
+                        UserModel.updateLikeList(element.name)
+                        print(UserModel.likeList)
+                    }
+                    .disposed(by: cell.disposeBag)
+
+                likeList
+                    .bind(with: self) { owner, data in
+                        let isSelected = data.contains(element.name)
+                        cell.likeButton.isSelected = isSelected
+                    }
+                    .disposed(by: cell.disposeBag)
             }
             .disposed(by: disposeBag)
 
