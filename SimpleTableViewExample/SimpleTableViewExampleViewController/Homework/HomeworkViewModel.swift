@@ -11,10 +11,7 @@ import RxCocoa
 
 final class HomeworkViewModel {
 
-    let disposeBag = DisposeBag()
-
-    var input: Input
-    var output: Output
+    var disposeBag = DisposeBag()
 
     let sampleUsers: [Person] = [
         Person(name: "Steven", email: "steven.brown@example.com", profileImage: "https://randomuser.me/api/portraits/thumb/men/1.jpg"),
@@ -71,53 +68,57 @@ final class HomeworkViewModel {
     ]
 
     struct Input {
-        let viewDidLoadTrigger: BehaviorSubject<Void?> = BehaviorSubject(value: nil)
-        var searchBarText: BehaviorSubject<String?> = BehaviorSubject(value: nil)
-        var likeListChange: BehaviorSubject<Void?> = BehaviorSubject(value: nil)
-        var tableViewTapped: BehaviorSubject<String?> = BehaviorSubject(value: nil)
+        var viewDidLoadTrigger: BehaviorSubject<Void>
+        var searchButtonCliked: Observable<String>
+        var likeListChange: BehaviorSubject<Void>
+        var tableViewTapped: ControlEvent<Person>
     }
 
     struct Output {
-        lazy var rawData: BehaviorSubject<[Person]> = BehaviorSubject(value: [])
-        var collectionViewData: BehaviorSubject<[String]> = BehaviorSubject(value: [])
-        var likeList: BehaviorSubject<Set<String>> = BehaviorSubject(value: [])
+        var rawData: BehaviorSubject<[Person]>
+        var collectionViewData: BehaviorSubject<[String]>
+        var likeList: BehaviorSubject<Set<String>>
     }
 
-    init() {
-        input = Input()
-        output = Output()
+    func transform(input: Input) -> Output {
 
-        bind()
-    }
+        let rawData: BehaviorSubject<[Person]> = BehaviorSubject(value: [])
 
-    func bind() {
-        input.viewDidLoadTrigger.bind(with: self) { owner, _ in
-            owner.output.rawData.onNext(owner.sampleUsers)
-        }
-        .disposed(by: disposeBag)
+        let collectionViewData: BehaviorSubject<[String]> = BehaviorSubject(value: [])
 
-        input.likeListChange.bind(with: self) { owner, _ in
-            let data = UserModel.likeList
-            owner.output.likeList.onNext(data)
-        }
-        .disposed(by: disposeBag)
+        let likeList: BehaviorSubject<Set<String>> = BehaviorSubject(value: [])
 
-        input.searchBarText.bind(with: self) { owner, value in
-            guard let value else { return }
-            var currentData = (try? owner.output.rawData.value()) ?? []
-            let imageUrls = owner.sampleUsers.map { $0.profileImage }
-            currentData.append(Person(name: value, email: "", profileImage: imageUrls.randomElement() ?? ""))
-            owner.output.rawData.onNext(currentData)
-        }
-        .disposed(by: disposeBag)
+        input.viewDidLoadTrigger
+            .map { self.sampleUsers }
+            .bind(with: self) { owner, data in
+                rawData.onNext(data)
+            }
+            .disposed(by: disposeBag)
 
-        input.tableViewTapped.bind(with: self) { owner, value in
-            guard let value else { return }
-            var currentData = (try? owner.output.collectionViewData.value()) ?? []
-            currentData.append(value)
-            print(currentData)
-            owner.output.collectionViewData.onNext(currentData)
-        }
-        .disposed(by: disposeBag)
+        input.tableViewTapped
+            .bind(with: self) { owner, value in
+                var data = (try? collectionViewData.value()) ?? []
+                data.append(value.name)
+                collectionViewData.onNext(data)
+            }
+            .disposed(by: disposeBag)
+
+        input.searchButtonCliked
+            .bind(with: self) { owner, value in
+                var data = (try? rawData.value()) ?? []
+                let imageURL = data.map { $0.profileImage }
+                data.insert(Person(name: value, email: "", profileImage: imageURL.randomElement()!), at: 0)
+                rawData.onNext(data)
+            }
+            .disposed(by: disposeBag)
+
+        input.likeListChange
+            .bind(with: self) { owner, _ in
+                let data = UserModel.likeList
+                likeList.onNext(data)
+            }
+            .disposed(by: disposeBag)
+
+        return Output(rawData: rawData, collectionViewData: collectionViewData, likeList: likeList)
     }
 }

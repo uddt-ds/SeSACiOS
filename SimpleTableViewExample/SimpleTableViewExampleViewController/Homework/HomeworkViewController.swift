@@ -32,12 +32,24 @@ class HomeworkViewController: UIViewController {
         configure()
         bind()
 
-        viewModel.input.viewDidLoadTrigger.onNext(())
+
     }
 
     private func bind() {
 
-        viewModel.output.rawData
+        let trigger = BehaviorSubject(value: ())
+
+        let likeListChange = BehaviorSubject(value: ())
+
+        let input = HomeworkViewModel.Input(viewDidLoadTrigger: trigger,
+                                            searchButtonCliked: searchBar.rx.searchButtonClicked.withLatestFrom(searchBar.rx.text.orEmpty),
+                                            likeListChange: likeListChange,
+                                            tableViewTapped: tableView.rx.modelSelected(Person.self))
+
+
+        let output = viewModel.transform(input: input)
+
+        output.rawData
             .bind(to: tableView.rx.items(cellIdentifier: PersonTableViewCell.identifier, cellType: PersonTableViewCell.self)) { [weak self] (row, element, cell) in
                 guard let self else { return }
 
@@ -48,12 +60,7 @@ class HomeworkViewController: UIViewController {
                     }
                     .disposed(by: cell.disposeBag)
 
-//                cell.buttonTapped = {
-//                    let vc = ViewController()
-//                    self.navigationController?.pushViewController(vc, animated: true)
-//                }
-
-                viewModel.output.likeList
+                output.likeList
                     .bind(with: self.view) { owner, data in
                         let isSelected = data.contains(element.name)
                         cell.likeButton.isSelected = isSelected
@@ -65,7 +72,7 @@ class HomeworkViewController: UIViewController {
                     .bind(with: self) { owner, _ in
                         cell.likeButton.isSelected.toggle()
                         UserModel.updateLikeList(element.name)
-                        owner.viewModel.input.likeListChange.onNext(())
+                        likeListChange.onNext(())
                     }
                     .disposed(by: cell.disposeBag)
 
@@ -74,20 +81,23 @@ class HomeworkViewController: UIViewController {
             .disposed(by: disposeBag)
 
         searchBar.rx.searchButtonClicked
-            .bind(with: self) { owner, _ in
-                let text = owner.searchBar.text
-                owner.viewModel.input.searchBarText.onNext(text)
-            }
+            .withLatestFrom(searchBar.rx.text.orEmpty)
+            .bind(with: self, onNext: { owner, value in
+                print(value)
+            })
+//            .bind(with: self) { owner, _ in
+//                let text = owner.searchBar.text
+//                owner.viewModel.input.searchBarText.onNext(text)
+//            }
             .disposed(by: disposeBag)
-
+//
         tableView.rx.modelSelected(Person.self)
             .bind(with: self) { owner, userData in
-                owner.viewModel.input.tableViewTapped.onNext(userData.name)
-                print(userData.name)
+
             }
             .disposed(by: disposeBag)
 
-        viewModel.output.collectionViewData
+        output.collectionViewData
             .bind(to: collectionView.rx.items) { (collectionView, row, element) in
                 let indexPath = IndexPath(row: row, section: 0)
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: UserCollectionViewCell.identifier, for: indexPath) as! UserCollectionViewCell
