@@ -56,7 +56,8 @@ class HomeworkViewController: UIViewController {
 
                 cell.detailButton.rx.tap
                     .bind(with: self) { owner, _ in
-                        let vc = ViewController(nickname: element.name)
+                        let vc = ViewController(name: element.name)
+                        owner.navigationItem.backButtonTitle = ""
                         owner.navigationController?.pushViewController(vc, animated: true)
                     }
                     .disposed(by: cell.disposeBag)

@@ -44,6 +44,16 @@ final class ViewController: UIViewController {
         return stackView
     }()
 
+    init(name: String) {
+        super.init(nibName: nil, bundle: nil)
+        navigationItem.title = name
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         configureView()
@@ -76,7 +86,7 @@ final class ViewController: UIViewController {
         tableViewButton.rx.tap
             .bind(with: self) { owner, _ in
                 let vc = SimpleTableViewExampleViewController()
-                vc.navigationItem.backButtonTitle = ""
+                owner.navigationItem.backButtonTitle = ""
                 owner.navigationController?.pushViewController(vc, animated: true)
             }
             .disposed(by: disposeBag)
@@ -84,7 +94,7 @@ final class ViewController: UIViewController {
         numbersViewButton.rx.tap
             .bind(with: self) { owner, _ in
                 let vc = NumbersViewController()
-                vc.navigationItem.backButtonTitle = ""
+                owner.navigationItem.backButtonTitle = ""
                 owner.navigationController?.pushViewController(vc, animated: true)
             }
             .disposed(by: disposeBag)
@@ -92,7 +102,7 @@ final class ViewController: UIViewController {
         validationViewButton.rx.tap
             .bind(with: self) { owner, _ in
                 let vc = SimpleValidationViewController()
-                vc.navigationItem.backButtonTitle = ""
+                owner.navigationItem.backButtonTitle = ""
                 owner.navigationController?.pushViewController(vc, animated: true)
             }
             .disposed(by: disposeBag)

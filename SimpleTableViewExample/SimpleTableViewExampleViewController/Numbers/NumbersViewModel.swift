@@ -12,8 +12,6 @@ import RxCocoa
 final class NumbersViewModel {
 
     var disposeBag = DisposeBag()
-    // Input: textField 3개
-    // Output: 연산한 결과
 
     struct Input {
         var firstNumberTextField: ControlProperty<String>
@@ -22,7 +20,7 @@ final class NumbersViewModel {
     }
 
     struct Output {
-        var calculateResult: BehaviorSubject<String> = BehaviorSubject(value: "")
+        var calculateResult: BehaviorSubject<String>
     }
 
     func transform(input: Input) -> Output {
