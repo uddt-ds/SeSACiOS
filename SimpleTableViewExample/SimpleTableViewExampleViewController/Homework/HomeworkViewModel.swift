@@ -83,9 +83,7 @@ final class HomeworkViewModel {
     func transform(input: Input) -> Output {
 
         let rawData: BehaviorRelay<[Person]> = BehaviorRelay(value: [])
-
         let collectionViewData: BehaviorRelay<[String]> = BehaviorRelay(value: [])
-
         let likeList: BehaviorRelay<Set<String>> = BehaviorRelay(value: [])
 
         input.viewDidLoadTrigger

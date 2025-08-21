@@ -59,13 +59,12 @@ class HomeworkViewController: UIViewController {
                         let vc = ViewController(nickname: element.name)
                         owner.navigationController?.pushViewController(vc, animated: true)
                     }
-                    .disposed(by: disposeBag)
+                    .disposed(by: cell.disposeBag)
 
                 output.likeList
                     .bind(with: self.view) { owner, data in
                         let isSelected = data.contains(element.name)
                         cell.likeButton.isSelected = isSelected
-                        print(data, isSelected)
                     }
                     .disposed(by: cell.disposeBag)
 
