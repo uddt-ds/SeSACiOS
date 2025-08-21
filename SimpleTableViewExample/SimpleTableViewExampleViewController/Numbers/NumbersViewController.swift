@@ -11,6 +11,8 @@ import SnapKit
 
 final class NumbersViewController: BaseViewController {
 
+    let viewModel = NumbersViewModel()
+
     private let firstNumberTextField: UITextField = {
         let textField = UITextField()
         textField.font = .systemFont(ofSize: 12)
@@ -118,33 +120,15 @@ final class NumbersViewController: BaseViewController {
     }
 
     private func bind() {
-        Observable.combineLatest(firstNumberTextField.rx.text.orEmpty,
-                                 secondNumberTextField.rx.text.orEmpty,
-                                 thirdNumberTextField.rx.text.orEmpty)
-        .skip(2)
-        .map { first, second, third -> Int in
-            let firstValue = Int(first) ?? 0
-            let secondValue = Int(second) ?? 0
-            let thirdValue = Int(third) ?? 0
-            return firstValue + secondValue + thirdValue
-        }
-        .bind(with: self, onNext: { owner, value in
-            owner.resultLabel.text = "\(value)"
-        })
-        .disposed(by: disposeBag)
+        
+        let input = NumbersViewModel.Input(firstNumberTextField: firstNumberTextField.rx.text.orEmpty,
+                                           secondNumberTextField: secondNumberTextField.rx.text.orEmpty,
+                                           thirdNumberTextField: thirdNumberTextField.rx.text.orEmpty)
+        let output = viewModel.transform(input: input)
+        
+        output.calculateResult
+            .bind(to: resultLabel.rx.text)
+            .disposed(by: disposeBag)
     }
-
-//    private func bindTest() {
-//        Observable.combineLatest(
-//            firstNumberTextField.rx.text.orEmpty.map { Int($0) ?? 0 },
-//            secondNumberTextField.rx.text.orEmpty.map { Int($0) ?? 0 },
-//            thirdNumberTextField.rx.text.orEmpty.map { Int($0) ?? 0 }
-//        )
-//        .map { ($0 + $1 + $2) }
-//        .bind(with: self) { owner, result in
-//            owner.resultLabel.text = "\(result)"
-//        }
-//        .disposed(by: disposeBag)
-//    }
 }
 
