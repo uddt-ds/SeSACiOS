@@ -67,8 +67,6 @@ final class HomeworkViewModel {
         Person(name: "Ann", email: "ann.howard@example.com", profileImage: "https://randomuser.me/api/portraits/thumb/women/25.jpg")
     ]
 
-    let userName: BehaviorRelay<String> = BehaviorRelay(value: "거북이")
-
     struct Input {
         var viewDidLoadTrigger: BehaviorSubject<Void>
         var searchButtonCliked: Observable<String>

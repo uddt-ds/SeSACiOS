@@ -55,9 +55,8 @@ class HomeworkViewController: UIViewController {
                 guard let self else { return }
 
                 cell.detailButton.rx.tap
-                    .withLatestFrom(viewModel.userName)
-                    .bind(with: self) { owner, value in
-                        let vc = ViewController(nickname: value)
+                    .bind(with: self) { owner, _ in
+                        let vc = ViewController(nickname: element.name)
                         owner.navigationController?.pushViewController(vc, animated: true)
                     }
                     .disposed(by: disposeBag)
