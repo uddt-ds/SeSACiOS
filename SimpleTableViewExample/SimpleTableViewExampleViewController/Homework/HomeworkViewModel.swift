@@ -67,6 +67,8 @@ final class HomeworkViewModel {
         Person(name: "Ann", email: "ann.howard@example.com", profileImage: "https://randomuser.me/api/portraits/thumb/women/25.jpg")
     ]
 
+    let userName: BehaviorRelay<String> = BehaviorRelay(value: "거북이")
+
     struct Input {
         var viewDidLoadTrigger: BehaviorSubject<Void>
         var searchButtonCliked: Observable<String>
@@ -75,47 +77,47 @@ final class HomeworkViewModel {
     }
 
     struct Output {
-        var rawData: BehaviorSubject<[Person]>
-        var collectionViewData: BehaviorSubject<[String]>
-        var likeList: BehaviorSubject<Set<String>>
+        var rawData: BehaviorRelay<[Person]>
+        var collectionViewData: BehaviorRelay<[String]>
+        var likeList: BehaviorRelay<(Set<String>)>
     }
 
     func transform(input: Input) -> Output {
 
-        let rawData: BehaviorSubject<[Person]> = BehaviorSubject(value: [])
+        let rawData: BehaviorRelay<[Person]> = BehaviorRelay(value: [])
 
-        let collectionViewData: BehaviorSubject<[String]> = BehaviorSubject(value: [])
+        let collectionViewData: BehaviorRelay<[String]> = BehaviorRelay(value: [])
 
-        let likeList: BehaviorSubject<Set<String>> = BehaviorSubject(value: [])
+        let likeList: BehaviorRelay<Set<String>> = BehaviorRelay(value: [])
 
         input.viewDidLoadTrigger
             .map { self.sampleUsers }
             .bind(with: self) { owner, data in
-                rawData.onNext(data)
+                rawData.accept(data)
             }
             .disposed(by: disposeBag)
 
         input.tableViewTapped
             .bind(with: self) { owner, value in
-                var data = (try? collectionViewData.value()) ?? []
+                var data = collectionViewData.value
                 data.append(value.name)
-                collectionViewData.onNext(data)
+                collectionViewData.accept(data)
             }
             .disposed(by: disposeBag)
 
         input.searchButtonCliked
             .bind(with: self) { owner, value in
-                var data = (try? rawData.value()) ?? []
+                var data = rawData.value
                 let imageURL = data.map { $0.profileImage }
-                data.insert(Person(name: value, email: "", profileImage: imageURL.randomElement()!), at: 0)
-                rawData.onNext(data)
+                data.insert(Person(name: value, email: "", profileImage: imageURL.randomElement() ?? ""), at: 0)
+                rawData.accept(data)
             }
             .disposed(by: disposeBag)
 
         input.likeListChange
             .bind(with: self) { owner, _ in
                 let data = UserModel.likeList
-                likeList.onNext(data)
+                likeList.accept(data)
             }
             .disposed(by: disposeBag)
 

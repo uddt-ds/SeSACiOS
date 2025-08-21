@@ -50,15 +50,17 @@ class HomeworkViewController: UIViewController {
         let output = viewModel.transform(input: input)
 
         output.rawData
-            .bind(to: tableView.rx.items(cellIdentifier: PersonTableViewCell.identifier, cellType: PersonTableViewCell.self)) { [weak self] (row, element, cell) in
+            .asDriver()
+            .drive(tableView.rx.items(cellIdentifier: PersonTableViewCell.identifier, cellType: PersonTableViewCell.self)) { [weak self] (row, element, cell) in
                 guard let self else { return }
 
                 cell.detailButton.rx.tap
-                    .bind(with: self) { owner, _ in
-                        let vc = ViewController()
+                    .withLatestFrom(viewModel.userName)
+                    .bind(with: self) { owner, value in
+                        let vc = ViewController(nickname: value)
                         owner.navigationController?.pushViewController(vc, animated: true)
                     }
-                    .disposed(by: cell.disposeBag)
+                    .disposed(by: disposeBag)
 
                 output.likeList
                     .bind(with: self.view) { owner, data in
@@ -68,6 +70,7 @@ class HomeworkViewController: UIViewController {
                     }
                     .disposed(by: cell.disposeBag)
 
+                // 이 로직도 ViewModel로 가야하지 않을까, UserModel을 프로퍼티 래퍼 형태로 저장해서 쓰는게 어색함 Rx구조로 변경이 필요함
                 cell.likeButton.rx.tap
                     .bind(with: self) { owner, _ in
                         cell.likeButton.isSelected.toggle()
@@ -80,25 +83,9 @@ class HomeworkViewController: UIViewController {
             }
             .disposed(by: disposeBag)
 
-        searchBar.rx.searchButtonClicked
-            .withLatestFrom(searchBar.rx.text.orEmpty)
-            .bind(with: self, onNext: { owner, value in
-                print(value)
-            })
-//            .bind(with: self) { owner, _ in
-//                let text = owner.searchBar.text
-//                owner.viewModel.input.searchBarText.onNext(text)
-//            }
-            .disposed(by: disposeBag)
-//
-        tableView.rx.modelSelected(Person.self)
-            .bind(with: self) { owner, userData in
-
-            }
-            .disposed(by: disposeBag)
-
         output.collectionViewData
-            .bind(to: collectionView.rx.items) { (collectionView, row, element) in
+            .asDriver()
+            .drive(collectionView.rx.items) { (collectionView, row, element) in
                 let indexPath = IndexPath(row: row, section: 0)
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: UserCollectionViewCell.identifier, for: indexPath) as! UserCollectionViewCell
                 cell.configureCell(with: element)
@@ -106,7 +93,7 @@ class HomeworkViewController: UIViewController {
             }
             .disposed(by: disposeBag)
     }
-    
+
     private func configure() {
         view.backgroundColor = .white
         view.addSubview(tableView)
