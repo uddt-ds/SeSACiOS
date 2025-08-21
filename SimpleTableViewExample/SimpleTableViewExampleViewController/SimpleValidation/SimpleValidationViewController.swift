@@ -12,6 +12,8 @@ import SnapKit
 
 final class SimpleValidationViewController: BaseViewController {
 
+    let viewModel = SimpleValidationViewModel()
+
     let nameHeaderLabel: UILabel = {
         let label = UILabel()
         label.font = .boldSystemFont(ofSize: 14)
@@ -89,6 +91,12 @@ final class SimpleValidationViewController: BaseViewController {
         return button
     }()
 
+    let testLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = .black
+        return label
+    }()
+
     override func viewDidLoad() {
         super.viewDidLoad()
         configureStackSubViewConstraints()
@@ -96,7 +104,7 @@ final class SimpleValidationViewController: BaseViewController {
     }
 
     override func configureHierarchy() {
-        [nameStackView, passwordStackView, checkButton].forEach { view.addSubview($0) }
+        [nameStackView, passwordStackView, checkButton, testLabel].forEach { view.addSubview($0) }
     }
 
     override func configureConstraints() {
@@ -116,6 +124,12 @@ final class SimpleValidationViewController: BaseViewController {
             make.height.equalTo(44)
             make.directionalHorizontalEdges.equalTo(view.safeAreaLayoutGuide).inset(20)
         }
+
+        // Operator 학습을 위한 Label
+        testLabel.snp.makeConstraints { make in
+            make.top.equalTo(checkButton.snp.bottom).offset(12)
+            make.centerX.equalTo(checkButton)
+        }
     }
 
     private func configureStackSubViewConstraints() {
@@ -130,49 +144,30 @@ final class SimpleValidationViewController: BaseViewController {
 
     private func bind() {
 
-        let usernameCheck = nameTextField.rx.text.orEmpty
+        let input = SimpleValidationViewModel.Input(nicknameTextField: nameTextField.rx.text.orEmpty, passwordTextField: passwordTextField.rx.text.orEmpty, buttonTapped: checkButton.rx.tap)
+
+        let output = viewModel.transform(input: input)
+
+        output.nicknameValidateResult
             .skip(1)
-            .map { $0.count > ValidationRange.name.rawValue }
-            .share()
-            .share(replay: 1)
+            .bind(to: nameValidateLabel.rx.text)
+            .disposed(by: disposeBag)
 
-        let passwordCheck = passwordTextField.rx.text.orEmpty
+        output.passwordValidateResult
             .skip(1)
-            .map { $0.count > ValidationRange.password.rawValue }
-            .share(replay: 1)
-
-        let totalCheck = Observable.combineLatest(usernameCheck, passwordCheck) { $0 && $1 }
-            .share(replay: 1)
-
-        usernameCheck
-            .bind(to: nameValidateLabel.rx.isHidden)
+            .bind(to: passwordValidateLabel.rx.text)
             .disposed(by: disposeBag)
 
-        usernameCheck
-            .bind(with: self) { owner, value in
-                owner.nameValidateLabel.text = value ? "" : "6글자 이상의 닉네임을 설정해주세요"
-            }
+        output.validateResult
+            .skip(1)
+            .bind(to: testLabel.rx.text)
             .disposed(by: disposeBag)
 
-        usernameCheck
-            .bind(to: passwordTextField.rx.isEnabled)
-            .disposed(by: disposeBag)
-
-        passwordCheck
-            .bind(to: passwordValidateLabel.rx.isHidden)
-            .disposed(by: disposeBag)
-
-        passwordCheck
-            .bind(with: self) { owner, value in
-                owner.passwordValidateLabel.text = value ? "" : "9글자 이상의 비밀번호를 설정해주세요"
-            }
-            .disposed(by: disposeBag)
-
-        totalCheck
+        output.isFullInput
             .bind(to: checkButton.rx.isEnabled)
             .disposed(by: disposeBag)
 
-        totalCheck
+        output.isFullInput
             .bind(with: self) { owner, value in
                 owner.checkButton.backgroundColor = value ? .systemGreen : .systemGray
             }
@@ -217,18 +212,6 @@ final class SimpleValidationViewController: BaseViewController {
 //                print(value)
 //            }
 //            .disposed(by: disposeBag)
-    }
-}
-
-extension SimpleValidationViewController {
-    enum textFieldMessage: String {
-        case name = "이름을 입력해주세요"
-        case password = "비밀번호를 입력해주세요"
-    }
-
-    enum ValidationRange: Int {
-        case name = 5
-        case password = 8
     }
 }
 
